@@ -4,30 +4,43 @@ const bodyParser = require('body-parser');
 const app = express();
 const port = process.env.PORT || 3000;
 
+
+const user_id = 'john_doe_17091999';
+const email = 'john@xyz.com';
+const roll_number = 'ABCD123';
+
 app.use(bodyParser.json());
 
-app.get('/bfhl', (req, res) => {
-    res.json({ operation_code: 1 });
-});
-
 app.post('/bfhl', (req, res) => {
-    const data = req.body;
-    const user_id = `${data.full_name}_${data.dob}`;
-    const is_success = true; // Set this based on your logic
+  try {
+    const data = req.body.data || [];
+    const numbers = data.filter((item) => typeof item === 'number' || (!isNaN(item) && !isNaN(parseInt(item))));
+    const alphabets = data.filter((item) => typeof item === 'string' && item.match(/[A-Za-z]/));
 
-    const response_data = {
-        status: "Success",
-        user_id: user_id,
-        college_email_id: data.college_email_id,
-        college_roll_number: data.college_roll_number,
-        numbers_array: data.numbers_array,
-        alphabets_array: data.alphabets_array,
-        highest_alphabet: Math.max(...data.alphabets_array.map(letter => letter.charCodeAt(0)), 0)
+    const highest_alphabet = alphabets.reduce((max, current) =>
+      current.localeCompare(max) > 0 ? current : max, ''
+    );
+
+    const response = {
+      is_success: true,
+      user_id,
+      email,
+      roll_number,
+      numbers,
+      alphabets,
+      highest_alphabet: highest_alphabet ? [highest_alphabet] : [],
     };
 
-    res.json(response_data);
+    res.status(200).json(response);
+  } catch (error) {
+    res.status(400).json({ is_success: false, error: error.message });
+  }
+});
+
+app.get('/bfhl', (req, res) => {
+  res.status(200).json({ operation_code: 1 });
 });
 
 app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
+  console.log(`Server is running on port ${port}`);
 });
